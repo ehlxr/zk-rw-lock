@@ -1,4 +1,4 @@
-package io.github.ehlxr.zkrwlock.lockv2;
+package io.github.ehlxr.zkrwlock;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -15,8 +15,8 @@ import java.util.stream.Collectors;
 
 /**
  * zk 实现读写锁
- * 实现效果为： 在lock 节点下创建 自定义锁资源， lock_01 , lock_02 等
- * 锁资源下为有序临时节点 分为读节点和写节点 read_00001  write_00001
+ * 实现效果为： 在 lock 节点下创建自定义锁资源，如：lock_01，lock_02 等
+ * 锁资源下为有序临时节点，分为读节点和写节点，例如：read_00001，write_00001
  * 获取读锁的方式为，锁资源下没有写节点，如果有则监听最后一个，读锁之间不会相互竞争
  * 获取写锁的方式也是写锁下没有最后一个节点，并且当前有读锁的时候需要监听当前读锁的结束,写锁之间会相互竞争
  *
@@ -40,11 +40,8 @@ public class ZkLock {
 
     static {
         ZK_CLIENT = CuratorFrameworkFactory.builder()
-                // IP 地址 + 端口号，多个用逗号隔开
                 .connectString(SERVER)
-                // 会话超时时间
                 .sessionTimeoutMs(TIMEOUT)
-                // 重连机制
                 .retryPolicy(new RetryOneTime(10000))
                 // 命名空间，用该客户端操作的东西都在该节点之下
                 .namespace(ROOTLOCK)
@@ -80,8 +77,6 @@ public class ZkLock {
                 .withMode(CreateMode.EPHEMERAL_SEQUENTIAL)
                 .withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE)
                 .forPath("/" + name + "/" + readWriteType.type);
-
-
         attemptLock(path);
     }
 
@@ -90,7 +85,6 @@ public class ZkLock {
             ZK_CLIENT.delete()
                     .deletingChildrenIfNeeded()
                     .forPath(path);
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -110,12 +104,11 @@ public class ZkLock {
                 .sorted(String::compareTo)
                 .collect(Collectors.toList());
 
-
         if (readWriteType == ReadWriteType.READ) {
             // 读锁判断最后一个写锁没有了就可以获得锁了
             if (writeList.size() == 0) {
                 // 我是读锁，并且没有写锁，直接获得
-                return;
+                // return;
             } else {
                 // 读锁但是有写锁，监听最后一个写锁
                 String lastPath = writeList.get(writeList.size() - 1);
@@ -126,8 +119,7 @@ public class ZkLock {
             if (writeList.size() == 1) {
                 // 获取到锁,已经没人获取到读锁了
                 if (readList.size() == 0 || shouldWrite) {
-
-                    return;
+                    // return;
                 } else {
                     String first = readList.get(0);
                     cirLock(first);
@@ -137,7 +129,7 @@ public class ZkLock {
                 if (writeList.lastIndexOf(name) == 0) {
                     // 获取到锁
                     if (readList.size() == 0) {
-                        return;
+                        // return;
                     } else {
                         String first = readList.get(0);
                         cirLock(first);
@@ -149,14 +141,11 @@ public class ZkLock {
                 }
             }
         }
-
         // 没有写锁，全部都不阻塞
-
     }
 
     protected void cirLock(String lastPath) throws Exception {
         // 获得上一个锁对象
-
         NodeCache nodeCache = new NodeCache(ZK_CLIENT, getPath() + "/" + lastPath);
 
         nodeCache.start();

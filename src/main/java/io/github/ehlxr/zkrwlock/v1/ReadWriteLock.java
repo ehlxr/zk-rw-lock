@@ -1,4 +1,4 @@
-package io.github.ehlxr.zkrwlock.lock;
+package io.github.ehlxr.zkrwlock.v1;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
