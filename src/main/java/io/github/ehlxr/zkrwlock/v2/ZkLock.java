@@ -1,4 +1,4 @@
-package io.github.ehlxr.zkrwlock;
+package io.github.ehlxr.zkrwlock.v2;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;

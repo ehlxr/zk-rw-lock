@@ -31,8 +31,6 @@ import org.apache.curator.framework.recipes.locks.InterProcessLock;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.framework.recipes.locks.InterProcessReadWriteLock;
 import org.apache.curator.retry.RetryOneTime;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -45,15 +43,13 @@ import java.util.stream.IntStream;
  * @since 2021-02-03 22:42.
  */
 public class InterProcessReadWriteLockTest {
-    private static CuratorFramework ZK_CLIENT;
+    private static final CuratorFramework ZK_CLIENT;
 
-    @Before
-    public void init() {
+    static {
         ZK_CLIENT = CuratorFrameworkFactory.builder()
                 .connectString("localhost:2181")
                 .sessionTimeoutMs(2000000)
                 .retryPolicy(new RetryOneTime(10000))
-                // 命名空间，用该客户端操作的东西都在该节点之下
                 .namespace("lock")
                 .build();
 
@@ -64,7 +60,14 @@ public class InterProcessReadWriteLockTest {
         }
     }
 
-    @Test
+    public static void main(String[] args) throws Exception {
+        InterProcessReadWriteLockTest interProcessReadWriteLockTest = new InterProcessReadWriteLockTest();
+
+        interProcessReadWriteLockTest.reentrantReadLockTest();
+        interProcessReadWriteLockTest.wwTest();
+        interProcessReadWriteLockTest.rwLockTest();
+    }
+
     public void reentrantReadLockTest() {
         int num = 2;
         // CountDownLatch latch = new CountDownLatch(num);
@@ -95,7 +98,6 @@ public class InterProcessReadWriteLockTest {
         // latch.await();
     }
 
-    @Test
     public void rwLockTest() throws Exception {
         /*
          * 读线程不互斥
@@ -152,7 +154,6 @@ public class InterProcessReadWriteLockTest {
         pool.shutdown();
     }
 
-    @Test
     public void wwTest() {
         int num = 5;
         // CountDownLatch latch = new CountDownLatch(num);
