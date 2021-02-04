@@ -65,16 +65,16 @@ public class InterProcessReadWriteLockTest {
     }
 
     @Test
-    public void reentrantReadLockTest() throws Exception {
+    public void reentrantReadLockTest() {
         int num = 2;
-        CountDownLatch latch = new CountDownLatch(num);
+        // CountDownLatch latch = new CountDownLatch(num);
 
         IntStream.range(0, num).forEach(i -> {
             // 创建共享可重入读锁
             InterProcessLock readLock = new InterProcessReadWriteLock(ZK_CLIENT, "/test").readLock();
 
-            // 获取锁对象
             try {
+                // 获取锁对象
                 readLock.acquire();
                 System.out.println(i + "获取读锁===============");
                 // 测试锁重入
@@ -86,13 +86,13 @@ public class InterProcessReadWriteLockTest {
                 readLock.release();
                 System.out.println(i + "再次释放读锁===============");
 
-                latch.countDown();
+                // latch.countDown();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
 
-        latch.await();
+        // latch.await();
     }
 
     @Test
@@ -101,15 +101,15 @@ public class InterProcessReadWriteLockTest {
          * 读线程不互斥
          */
         int num = 50;
-        CountDownLatch latch = new CountDownLatch(num);
         CyclicBarrier barrier = new CyclicBarrier(num);
 
-        ExecutorService pool = Executors.newFixedThreadPool(1);
+        ExecutorService pool = Executors.newFixedThreadPool(num);
+        CountDownLatch latch = new CountDownLatch(num);
 
         /*
          * "+ 开始读请求。。。。" 与 "= 读请求结束。。。。" 交叉出现
          */
-        pool.execute(() -> IntStream.range(0, num).parallel().forEach(i -> {
+        IntStream.range(0, num).forEach(i -> pool.execute(() -> {
             InterProcessMutex lock = new InterProcessReadWriteLock(ZK_CLIENT, "/test").readLock();
             try {
                 System.out.println("> 读请求就绪。。。。" + i + " " + Thread.currentThread().getName());
@@ -134,6 +134,7 @@ public class InterProcessReadWriteLockTest {
             }
         }));
 
+        Thread.sleep(10);
         InterProcessMutex lock = new InterProcessReadWriteLock(ZK_CLIENT, "/test").writeLock();
         try {
             lock.acquire();
@@ -152,9 +153,9 @@ public class InterProcessReadWriteLockTest {
     }
 
     @Test
-    public void wwTest() throws InterruptedException {
+    public void wwTest() {
         int num = 5;
-        CountDownLatch latch = new CountDownLatch(num);
+        // CountDownLatch latch = new CountDownLatch(num);
         CyclicBarrier barrier = new CyclicBarrier(num);
 
         /*
@@ -181,10 +182,10 @@ public class InterProcessReadWriteLockTest {
                     e.printStackTrace();
                 }
 
-                latch.countDown();
+                // latch.countDown();
             }
         });
 
-        latch.await();
+        // latch.await();
     }
 }
